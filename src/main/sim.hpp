@@ -24,9 +24,9 @@ static nt::StructArrayPublisher<frc::Pose3d> finals = nt::NetworkTableInstance::
 static nt::StructArrayPublisher<frc::Pose3d> ballz = nt::NetworkTableInstance::GetDefault()
     .GetStructArrayTopic<frc::Pose3d>( "ballz" ).Publish();
 
-static double owl_gear = cfg::owl_config.Feedback.SensorToMechanismRatio;
-static double hood_gear = cfg::hood_cfg.Feedback.SensorToMechanismRatio;
-static double flywheel_gear = cfg::shooter_config.Feedback.SensorToMechanismRatio;
+static double owl_gear = (160.0 / 16.0) * (54.0 / 18.0) * (24.0 / 12.0);
+static double hood_gear = ( 294.0 / 20.0 ) * ( 42.0 / 18.0 ) * ( 68.0 / 9.0 );
+static double flywheel_gear = 1;
 static frc::sim::DCMotorSim owl_sim_model{
     frc::LinearSystemId::DCMotorSystem(
         frc::DCMotor::KrakenX44FOC(1),
@@ -52,7 +52,7 @@ static frc::sim::DCMotorSim flywheel_sim_model{
     frc::DCMotor::KrakenX60FOC(2)
 };
 
-static double intake_pivot_gear = cfg::intake::pivot_config.Feedback.SensorToMechanismRatio;
+static double intake_pivot_gear = (30.0 / 12.0) * (64.0 / 16.0) * (50.0 / 20.0) * (36.0 / 12.0);
 static frc::sim::DCMotorSim intake_pivot_sim_model{
     frc::LinearSystemId::DCMotorSystem(
         frc::DCMotor::KrakenX44FOC(1),

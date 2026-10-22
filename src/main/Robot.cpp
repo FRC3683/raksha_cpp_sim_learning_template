@@ -13,17 +13,10 @@
 #include "config.hpp"
 #include "constants.hpp"
 #include "autos.hpp"
-#include "stats_tracking.hpp"
 
 #include "subsystems/swerve.hpp"
-#include "subsystems/intake.hpp"
-#include "subsystems/vision.hpp"
-#include "subsystems/leds.hpp"
 #include <frc/event/BooleanEvent.h>
-#include "subsystems/shooter.hpp"
 #include "magic_enum/magic_enum.hpp"
-#include "subsystems/Feed.hpp"
-#include "subsystems/Samintake.hpp"
 
 #include "sim.hpp"
 
@@ -44,8 +37,6 @@ frc::PowerDistribution PDH{ 1, frc::PowerDistribution::ModuleType::kRev };
     double k_turn_deadband = 0.5;
 
 static void robot_init() {
-    shooter::init();
-    shooter::zero_turn_pose();
 
     bool is_comp_bot = frc::RobotController::GetSerialNumber() != PRAC_BOT_SRL_NUMBER || frc::RobotBase::IsSimulation();
     frc::SmartDashboard::PutBoolean( "health/is_comp", is_comp_bot );
@@ -56,20 +47,8 @@ static void robot_init() {
     field::field_symmetry = field::symmetry_type::ROTATIONAL;
 
     swerve::init();
-    intake::init();
-    intake::disable();
-    leds::init();
-    shooter::zero_turn_pose(); 
-    Feed::init();
-
-    stats_tracking::stats_init();
 
     if( frc::RobotBase::IsSimulation() ) {
-        get_owl_sim = shooter::get_owl_sim;
-        get_hood_sim = shooter::get_hood_sim;
-        get_flywheel_sim = shooter::get_flywheel_sim;
-        get_pivot_sim = Samintake::get_pivot_sim;
-        get_neck_sim = Feed::get_neck_sim;
         sim_init();
     }
 }
@@ -77,20 +56,11 @@ static void robot_init() {
 
 static void read_inputs() {
     juice::update( PDH );
-    vision::read_inputs();
     swerve::read_inputs();
-    intake::read_inputs();
-    // shooter::zero_pose();
-    SmartDashboard::PutNumber("curpose", shooter::calculate_crt_angle());
-    SmartDashboard::PutNumber("sixteen", shooter::get_sixteen_encoder_value());
-    SmartDashboard::PutNumber("seventeen", shooter::get_seventeen_encoder_value());
-
 }
 
 
 static void teleop_periodic() {
-    SmartDashboard::PutString("curr state", magic_enum::enum_name(shooter::curstate)); 
-    SmartDashboard::PutNumber("cur pose of shooter", shooter::hood_motor.GetPosition().GetValueAsDouble());
     if( auto_routine ) {
         if( oi::driver_any_input() ) {
             auto_routine->cancel();
@@ -98,15 +68,6 @@ static void teleop_periodic() {
         auto_routine->process();
     }
 
-    if (oi::xbox_driver.GetBackButton()) {
-        shooter::curstate = shooter::state::ATRACK; 
-    }
-
-    if (oi::xbox_driver.GetBackButtonReleased()){
-        shooter::curstate = shooter::state::ASHOOT;
-    }
-
-    
     if( oi::get_left_stick_driver().length_squared() > 0.001 ) {
         swerve::strafe_tele();
     }
@@ -119,20 +80,6 @@ static void teleop_periodic() {
     if (oi::xbox_driver.GetXButton()) {
         vec2 zerovec = vec2 {0, 0};
         swerve::reset_translation(zerovec);
-    }
-
-
-    if (oi::xbox_driver.GetYButton()) {
-        Samintake::set_intention(Samintake::Intention::succc);
-    }
-
-    if (oi::xbox_driver.GetBButton()) {
-        Samintake::set_intention(Samintake::Intention::idle);
-
-    }
-
-    if (oi::xbox_driver.GetAButton()) {
-        Samintake::set_intention(Samintake::Intention::vomit);
     }
 
 }
@@ -160,17 +107,10 @@ static void disabled_periodic() {
 
 static void handle_subsystems() {
     swerve::handle_states();
-    intake::handle_states();
-    //shooter must be before feed bc thats how feed knows to want ballz
-    shooter::handle_states();
-    Feed::handle_states(); 
 }
 
 static void set_outputs() {
     swerve::set_outputs();
-    intake::set_outputs();
-
-    leds::set_outputs();
 
     swerve::update_dashboard();
 }
@@ -203,8 +143,6 @@ public:
 
         set_outputs();
 
-        stats_tracking::stats_update();
-
         if( frc::RobotBase::IsSimulation() ) {
             sim_periodic();
         }
@@ -217,16 +155,9 @@ public:
         }
     }
     void AutonomousExit() final override  {
-        // if( auto_routine ) {
-        //     auto_routine->cancel();
-        // }
     }
 
-    void TeleopInit() final override {
-            shooter::set_to_ASHOOT();
-            SmartDashboard::PutNumber("cur intention of shooter", int(shooter::curstate));
-
-    }
+    void TeleopInit() final override {}
     void TeleopExit() final override {}
 
     void DisabledInit() final override {
@@ -237,8 +168,6 @@ public:
 
     void TestInit() final override {
         swerve::disable();
-        shooter::set_to_ZEROING();
-        SmartDashboard::PutNumber("cur intention of shooter", int(shooter::curstate));
     }
     void TestExit() final override {
         swerve::enable();

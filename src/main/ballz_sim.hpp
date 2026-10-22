@@ -3,6 +3,7 @@
 #include <random> // for ball sim
 #include <vector>
 
+#include <frc/Timer.h>
 #include <frc/geometry/Pose3d.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 
@@ -63,7 +64,7 @@ void simulate_balls( frc::sim::DCMotorSim &flywheel_sim_model, frc::sim::DCMotor
     static bool feeding_ballz = false;
     static units::second_t last_shot_time = 0_s;
 
-    units::second_t curtime = Timer::GetFPGATimestamp();
+    units::second_t curtime = frc::Timer::GetFPGATimestamp();
 
     feeding_ballz = ( feed_sim_model.GetAngularVelocity() > 100_rpm );
 
